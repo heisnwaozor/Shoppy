@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Product, Category, ProductColor } from '@/types';
+import { Product, Category } from '@/types';
 import { PRODUCTS } from '@/data/products';
 import { getProducts } from '@/lib/supabase';
 import { useCartStore } from '@/store/useCartStore';
@@ -9,7 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import { ProductModal } from '@/components/ProductModal';
 import { CartDrawer } from '@/components/CartDrawer';
 import { ShoppyLogo } from '@/components/ShoppyLogo';
-import { Search, SlidersHorizontal, Plus, Check, Eye, Zap, ShieldCheck } from 'lucide-react';
+import { Search, Plus, Check, Eye, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 
 export default function ShoppyOrvantePage() {
@@ -20,6 +20,7 @@ export default function ShoppyOrvantePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [mounted, setMounted] = useState(false);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const statementRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
@@ -78,7 +79,7 @@ export default function ShoppyOrvantePage() {
     const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isRecorder = window.location.search.includes('rec=1');
 
-    // 1. Sliding nav pill
+    // 1. Sliding nav pill (Desktop)
     const navLinks = document.querySelectorAll<HTMLElement>('.hero-nav-link');
     const navSlider = document.getElementById('hero-nav-slider');
 
@@ -121,7 +122,7 @@ export default function ShoppyOrvantePage() {
       requestAnimationFrame(step);
     }
 
-    // 3. Web Animations API on Load
+    // 3. Web Animations API on Load (without locking transform)
     if (!isReducedMotion && !isRecorder) {
       const heroNav = document.getElementById('hero-nav');
       if (heroNav) {
@@ -151,19 +152,24 @@ export default function ShoppyOrvantePage() {
       });
 
       if (photoRef.current) {
-        photoRef.current.animate(
+        const photoAnim = photoRef.current.animate(
           [
             { transform: 'translateY(40px)', filter: 'blur(10px)', opacity: 0 },
             { transform: 'translateY(0)', filter: 'blur(0)', opacity: 1 },
           ],
-          { duration: 1300, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' }
+          { duration: 1300, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
         );
+        photoAnim.onfinish = () => {
+          if (photoRef.current) {
+            photoRef.current.style.opacity = '1';
+            photoRef.current.style.filter = 'none';
+          }
+        };
       }
 
       const heroElements = [
         document.getElementById('hero-date'),
         document.getElementById('hero-contact'),
-        document.getElementById('hero-year'),
         document.getElementById('hero-about'),
         document.getElementById('hero-stats'),
         document.getElementById('hero-plate'),
@@ -211,11 +217,13 @@ export default function ShoppyOrvantePage() {
     const wordSpans = Array.from(document.querySelectorAll<HTMLElement>('.word'));
 
     function handleScroll() {
-      if (isReducedMotion || isRecorder) return;
       const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollY > 400);
 
-      // Photo drift (0.12x scroll)
-      if (photoRef.current && scrollY < window.innerHeight) {
+      if (isReducedMotion || isRecorder) return;
+
+      // Photo drift (only on desktop where screen width > 760px)
+      if (photoRef.current && window.innerWidth > 760 && scrollY < window.innerHeight) {
         photoRef.current.style.transform = `translateY(${scrollY * 0.12}px)`;
       }
 
@@ -232,7 +240,7 @@ export default function ShoppyOrvantePage() {
           if (i <= activeIndex - 2) {
             span.style.color = '#f4f4f4';
           } else if (i <= activeIndex) {
-            span.style.color = '#bbbbbb'; // 3-word soft edge
+            span.style.color = '#bbbbbb';
           } else {
             span.style.color = '#6f6f6f';
           }
@@ -242,7 +250,7 @@ export default function ShoppyOrvantePage() {
       // Trust panel entry triggers counters & avatar pop-in
       if (trustRef.current && !trustAnimated) {
         const tRect = trustRef.current.getBoundingClientRect();
-        if (tRect.top < window.innerHeight * 0.8) {
+        if (tRect.top < window.innerHeight * 0.85) {
           trustAnimated = true;
           animateCounter('counter-56', 56, 1200);
           animateCounter('counter-10', 10, 1000);
@@ -311,6 +319,31 @@ export default function ShoppyOrvantePage() {
 
       <div className="shoppy-app-root">
         {/* ====================================================================
+             MOBILE TOP HEADER (Visible only on screens <= 760px)
+             ==================================================================== */}
+        <header className="mobile-header-bar md:hidden">
+          <div className="flex items-center gap-2">
+            <ShoppyLogo className="w-6 h-6" />
+            <span className="font-mono font-bold text-sm tracking-widest uppercase text-black">
+              SHOPPY
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleCart}
+            className="mobile-header-bag-btn"
+            aria-label="Open Cart Bag"
+          >
+            <span>Bag</span>
+            {totalCartCount > 0 && (
+              <span className="cart-badge-pill">{totalCartCount}</span>
+            )}
+            <span>↗</span>
+          </button>
+        </header>
+
+        {/* ====================================================================
              SECTION 1: HERO (1440 x 938u)
              ==================================================================== */}
         <section className="hero" id="hero">
@@ -358,12 +391,12 @@ export default function ShoppyOrvantePage() {
               </button>
             </nav>
 
-            {/* Top Right: Date & Cart Button */}
-            <div className="hero-date" id="hero-date">Sunday / 17.06 – 27 June 2026</div>
+            {/* Top Right: Date & Cart Button (Desktop only, mobile uses mobile-header-bar) */}
+            <div className="hero-date hidden md:block" id="hero-date">Sunday / 17.06 – 27 June 2026</div>
             <button
               type="button"
               onClick={toggleCart}
-              className="hero-contact-btn"
+              className="hero-contact-btn hidden md:flex"
               id="hero-contact"
               aria-label="Open Cart Bag"
             >
@@ -380,10 +413,13 @@ export default function ShoppyOrvantePage() {
                 <span className="hero-title">PURE</span>
               </div>
               <div className="title-line-mask">
-                <span className="hero-title">DESIGN</span>
+                <span className="hero-title">
+                  DESIGN
+                  <span className="hero-year-inline md:hidden"> (’25)</span>
+                </span>
               </div>
+              <span className="hero-year hidden md:block" id="hero-year">(’25)</span>
             </div>
-            <div className="hero-year" id="hero-year">(’25)</div>
 
             {/* About Copy */}
             <div className="hero-about" id="hero-about">
@@ -534,8 +570,8 @@ export default function ShoppyOrvantePage() {
           </div>
 
           <div className="statement-subline">
-            Performance-driven marketing, from<br />
-            strategy to execution. <span className="subline-grey">Built for growing brands.</span>
+            Performance-driven marketing, from strategy to execution.{' '}
+            <span className="subline-grey">Built for growing brands.</span>
           </div>
         </section>
 
@@ -695,7 +731,7 @@ export default function ShoppyOrvantePage() {
                       >
                         {addedId === product.id ? (
                           <>
-                            <Check className="w-3.5 h-3.5" /> Added
+                            <Check className="w-3.5 h-3.5 text-black" /> Added
                           </>
                         ) : (
                           <>
@@ -713,14 +749,14 @@ export default function ShoppyOrvantePage() {
         </section>
 
         {/* ====================================================================
-             SECTION 5: TRUST PANEL (1302 x 429u)
+             SECTION 5: TRUST PANEL (1340 x 429u)
              ==================================================================== */}
         <section className="trust-section" id="trust" ref={trustRef}>
           <div className="trust-panel" id="trust-panel">
             
-            {/* Overlapping Frosted Tiles */}
-            <div className="trust-tile-asterisk">✶</div>
-            <div className="trust-tile-dots">
+            {/* Overlapping Frosted Tiles (Hidden on mobile to avoid headline collision) */}
+            <div className="trust-tile-asterisk hidden md:flex">✶</div>
+            <div className="trust-tile-dots hidden md:grid">
               <div className="grid-dot"></div>
               <div className="grid-dot"></div>
               <div className="grid-dot"></div>
@@ -780,7 +816,7 @@ export default function ShoppyOrvantePage() {
                 </div>
               </div>
 
-              {/* Card 3: Portrait Card (Cut off by right panel edge) */}
+              {/* Card 3: Portrait Card (Proper framing, no harsh 59px cut-off) */}
               <div className="trust-card card-portrait">
                 <img
                   src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/addecc7d-666f-4342-8290-ed7f7cbbffd6.webp"
@@ -822,6 +858,23 @@ export default function ShoppyOrvantePage() {
           </div>
         </footer>
 
+        {/* Mobile Floating Quick-Bag Pill (Appears when scrolled down on phones) */}
+        {mounted && isScrolled && (
+          <button
+            type="button"
+            onClick={toggleCart}
+            className="mobile-floating-bag md:hidden"
+            aria-label="Open Floating Cart Bag"
+          >
+            <ShoppyLogo className="w-4 h-4" />
+            <span>Bag</span>
+            {totalCartCount > 0 && (
+              <span className="cart-badge-pill">{totalCartCount}</span>
+            )}
+            <span>↗</span>
+          </button>
+        )}
+
         {/* Product Modal */}
         <ProductModal
           product={selectedProduct}
@@ -839,6 +892,66 @@ export default function ShoppyOrvantePage() {
           color: var(--c-text);
           font-family: var(--font-ui);
           overflow-x: hidden;
+        }
+
+        /* Mobile Top Bar (Clean separation of logo and bag button) */
+        .mobile-header-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: calc(14 * var(--u)) calc(20 * var(--u));
+          background: #dadada;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+          position: sticky;
+          top: 0;
+          z-index: 30;
+        }
+
+        .mobile-header-bag-btn {
+          height: calc(38 * var(--u));
+          padding: 0 calc(16 * var(--u));
+          background: #111111;
+          color: #ffffff;
+          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          gap: calc(6 * var(--u));
+          font-size: calc(12 * var(--u));
+          font-family: var(--font-ui);
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .mobile-floating-bag {
+          position: fixed;
+          bottom: 24px;
+          right: 20px;
+          z-index: 40;
+          background: #ffffff;
+          color: #000000;
+          padding: 10px 18px;
+          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 700;
+          font-family: var(--font-ui);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
 
         /* Hero */
@@ -918,6 +1031,7 @@ export default function ShoppyOrvantePage() {
           color: #6f6f6f;
           transition: color 0.25s ease;
           cursor: pointer;
+          white-space: nowrap;
         }
 
         .hero-nav-link.active,
@@ -1002,6 +1116,13 @@ export default function ShoppyOrvantePage() {
           font-weight: 500;
           color: #6f6f6f;
           z-index: 10;
+        }
+
+        .hero-year-inline {
+          font-family: var(--font-ui);
+          font-size: 0.35em;
+          color: #6f6f6f;
+          vertical-align: middle;
         }
 
         .hero-about {
@@ -1327,12 +1448,6 @@ export default function ShoppyOrvantePage() {
           gap: calc(4 * var(--u));
         }
 
-        .mark-tri {
-          width: calc(14 * var(--u));
-          height: calc(14 * var(--u));
-          fill: #ffffff;
-        }
-
         .brand-plate-name {
           font-family: var(--font-display);
           font-size: calc(25 * var(--u));
@@ -1458,6 +1573,7 @@ export default function ShoppyOrvantePage() {
           line-height: 1.4;
           font-weight: 450;
           color: #f4f4f4;
+          max-width: 90vw;
         }
 
         .subline-grey {
@@ -1475,7 +1591,7 @@ export default function ShoppyOrvantePage() {
 
         .collection-inner {
           width: 100%;
-          max-width: calc(1302 * var(--u));
+          max-width: calc(1340 * var(--u));
           margin: 0 auto;
           padding: 0 calc(20 * var(--u));
         }
@@ -1540,6 +1656,7 @@ export default function ShoppyOrvantePage() {
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s ease;
+          white-space: nowrap;
         }
 
         .col-pill.active, .col-pill:hover {
@@ -1808,7 +1925,7 @@ export default function ShoppyOrvantePage() {
 
         .trust-panel {
           position: relative;
-          width: calc(1302 * var(--u));
+          width: calc(1340 * var(--u));
           max-width: calc(100vw - calc(40 * var(--u)));
           min-height: calc(429 * var(--u));
           border: 1px solid var(--border-28);
@@ -1819,12 +1936,12 @@ export default function ShoppyOrvantePage() {
           justify-content: space-between;
           align-items: center;
           overflow: hidden;
-          gap: calc(30 * var(--u));
+          gap: calc(24 * var(--u));
         }
 
         .trust-left {
           position: relative;
-          width: calc(420 * var(--u));
+          width: calc(410 * var(--u));
           flex-shrink: 0;
         }
 
@@ -1892,7 +2009,7 @@ export default function ShoppyOrvantePage() {
         .trust-cards-row {
           display: flex;
           align-items: center;
-          gap: calc(16 * var(--u));
+          gap: calc(14 * var(--u));
           position: relative;
         }
 
@@ -1912,7 +2029,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .card-avatars {
-          width: calc(293 * var(--u));
+          width: calc(280 * var(--u));
           background-color: #d6d6d6;
           color: #111111;
         }
@@ -1955,7 +2072,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .card-awards {
-          width: calc(298 * var(--u));
+          width: calc(285 * var(--u));
           background-color: #262626;
           color: #ffffff;
           border: 1px solid rgba(255,255,255,0.06);
@@ -2004,7 +2121,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .card-portrait {
-          width: calc(200 * var(--u));
+          width: calc(190 * var(--u));
           padding: 0;
           overflow: hidden;
           border-radius: calc(8 * var(--u));
@@ -2028,7 +2145,7 @@ export default function ShoppyOrvantePage() {
 
         .footer-inner {
           width: 100%;
-          max-width: calc(1302 * var(--u));
+          max-width: calc(1340 * var(--u));
           margin: 0 auto;
           padding: 0 calc(20 * var(--u));
         }
@@ -2094,100 +2211,221 @@ export default function ShoppyOrvantePage() {
           gap: calc(10 * var(--u));
         }
 
-        /* Phone layout <= 760px */
-        @media (max-width: 760px) {
-          .hero {
-            height: auto;
-            min-height: 100vh;
-            padding-bottom: calc(60 * var(--u));
-          }
-
+        /* ====================================================================
+           TABLET BREAKPOINT (761px - 1024px)
+           Fixes microscopic fonts, touch targets, and awkward 4-col squeezes
+           ==================================================================== */
+        @media (min-width: 761px) and (max-width: 1024px) {
           .hero-nav {
-            left: calc(20 * var(--u));
-            top: calc(24 * var(--u));
-            height: calc(42 * var(--u));
+            top: 24px;
+            left: 20px;
+            height: 44px;
           }
 
           .hero-nav-slider {
-            height: calc(34 * var(--u));
+            height: 36px;
           }
 
           .hero-nav-link {
-            padding: 0 calc(12 * var(--u));
-            font-size: calc(12 * var(--u));
+            font-size: 13px;
+            height: 36px;
+            padding: 0 14px;
+          }
+
+          .hero-contact-btn {
+            top: 24px;
+            right: 20px;
+            left: auto;
+            height: 44px;
+            width: auto;
+            padding: 0 20px;
+            font-size: 13px;
           }
 
           .hero-date {
             display: none;
           }
 
-          .hero-contact-btn {
-            left: auto;
-            right: calc(20 * var(--u));
-            top: calc(24 * var(--u));
-            width: calc(40 * var(--u));
-            height: calc(40 * var(--u));
-            border-radius: 50%;
-            padding: 0;
-            font-size: 0;
-          }
-
-          .hero-contact-btn::after {
-            content: '↗';
-            font-size: calc(18 * var(--u));
-          }
-
-          .hero-title-group {
-            left: calc(20 * var(--u));
-            top: calc(100 * var(--u));
-            position: relative;
-          }
-
           .hero-title {
-            font-size: calc(62 * var(--u));
+            font-size: 64px;
           }
 
           .hero-year {
-            left: calc(230 * var(--u));
-            top: calc(118 * var(--u));
+            left: 240px;
+            top: 20px;
+          }
+
+          .collection-title {
+            font-size: 36px;
+          }
+
+          .col-pill {
+            font-size: 13px;
+            padding: 8px 16px;
+          }
+
+          .curr-btn {
+            font-size: 12px;
+            padding: 6px 14px;
+          }
+
+          .search-input {
+            font-size: 13px;
+            padding: 8px 14px 8px 32px;
+          }
+
+          .product-title {
+            font-size: 14px;
+          }
+
+          .product-price {
+            font-size: 14px;
+          }
+
+          .add-btn {
+            font-size: 12px;
+            padding: 8px 14px;
+          }
+
+          .trust-heading {
+            font-size: 40px;
+          }
+
+          .trust-para {
+            font-size: 13px;
+          }
+
+          .trust-panel {
+            padding: 32px 24px;
+          }
+
+          .trust-cards-row {
+            gap: 10px;
+          }
+
+          .card-avatars {
+            width: 230px;
+            padding: 16px;
+          }
+
+          .card-awards {
+            width: 230px;
+            padding: 16px;
+          }
+
+          .card-portrait {
+            width: 150px;
+          }
+        }
+
+        /* ====================================================================
+           PHONE LAYOUT (<= 760px)
+           Zero-overlap natural flow, thumb-friendly navigation & cart
+           ==================================================================== */
+        @media (max-width: 760px) {
+          .hero {
+            height: auto;
+            min-height: 100vh;
+            padding-bottom: calc(50 * var(--u));
+          }
+
+          /* Hide desktop absolute nav and button; mobile header bar handles it */
+          .hero-nav {
+            position: relative;
+            left: calc(16 * var(--u));
+            top: calc(12 * var(--u));
+            width: calc(100% - calc(32 * var(--u)));
+            height: calc(44 * var(--u));
+            overflow-x: auto;
+            scrollbar-width: none;
+            box-shadow: none;
+            background: #ffffff;
+          }
+
+          .hero-nav::-webkit-scrollbar {
+            display: none;
+          }
+
+          .hero-nav-slider {
+            display: none;
+          }
+
+          .hero-nav-link {
+            font-size: calc(12 * var(--u));
+            padding: 0 calc(12 * var(--u));
+            height: calc(36 * var(--u));
+            border-radius: 9999px;
+          }
+
+          .hero-nav-link.active {
+            background: #111111;
+            color: #ffffff;
+          }
+
+          /* Title & About Flow naturally without overlapping */
+          .hero-title-group {
+            position: relative;
+            left: 0;
+            top: 0;
+            margin-top: calc(24 * var(--u));
+            padding: 0 calc(20 * var(--u));
+          }
+
+          .hero-title {
+            font-size: calc(52 * var(--u));
+            line-height: 0.92;
           }
 
           .hero-about {
-            left: calc(20 * var(--u));
-            top: auto;
             position: relative;
-            margin-top: calc(30 * var(--u));
-            width: calc(350 * var(--u));
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin-top: calc(20 * var(--u));
+            padding: 0 calc(20 * var(--u));
           }
 
+          .hero-book-btn {
+            width: calc(150 * var(--u));
+            height: calc(44 * var(--u));
+          }
+
+          /* Photo & Brand Plate stacked securely */
           .hero-photo-wrap {
             position: relative;
             left: 0;
             top: 0;
-            width: 100vw;
-            height: calc(470 * var(--u));
-            margin-top: calc(40 * var(--u));
-            -webkit-mask-image: none;
-            mask-image: none;
+            width: 100%;
+            height: calc(440 * var(--u));
+            margin-top: calc(24 * var(--u));
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
           }
 
           .hero-brand-plate {
+            position: absolute;
             left: calc(20 * var(--u));
-            top: calc(360 * var(--u));
-            width: calc(350 * var(--u));
-            height: calc(60 * var(--u));
+            right: calc(20 * var(--u));
+            bottom: calc(20 * var(--u));
+            top: auto;
+            width: auto;
+            height: calc(56 * var(--u));
+            padding: 0 calc(16 * var(--u));
           }
 
           .hero-logos-row {
-            left: calc(20 * var(--u));
-            top: calc(435 * var(--u));
+            position: relative;
+            left: 0;
+            top: 0;
+            margin-top: calc(16 * var(--u));
+            justify-content: center;
             font-size: calc(11 * var(--u));
           }
 
           .hero-growth-pill {
+            position: relative;
             left: calc(20 * var(--u));
             top: auto;
-            position: relative;
             margin-top: calc(20 * var(--u));
             display: inline-flex;
           }
@@ -2197,28 +2435,34 @@ export default function ShoppyOrvantePage() {
             right: auto;
             top: auto;
             text-align: left;
-            margin: calc(16 * var(--u)) calc(20 * var(--u));
+            margin: calc(14 * var(--u)) calc(20 * var(--u));
           }
 
           .hero-stats-frame {
             position: relative;
-            left: calc(20 * var(--u));
+            left: 0;
             top: auto;
-            width: calc(350 * var(--u));
-            margin-top: calc(20 * var(--u));
+            width: calc(100% - calc(40 * var(--u)));
+            margin: calc(20 * var(--u)) auto 0 auto;
+          }
+
+          .stats-partner-glyphs {
+            grid-template-columns: repeat(2, 1fr);
+            gap: calc(6 * var(--u));
           }
 
           .hero-q-card {
             position: relative;
             right: auto;
             top: auto;
-            width: calc(350 * var(--u));
-            margin: calc(24 * var(--u)) calc(20 * var(--u));
+            width: calc(100% - calc(40 * var(--u)));
+            margin: calc(20 * var(--u)) auto 0 auto;
           }
 
+          /* Statement */
           .statement-section {
-            padding-top: calc(100 * var(--u));
-            padding-bottom: calc(120 * var(--u));
+            padding-top: calc(90 * var(--u));
+            padding-bottom: calc(100 * var(--u));
           }
 
           .statement-text {
@@ -2227,16 +2471,44 @@ export default function ShoppyOrvantePage() {
           }
 
           .statement-subline {
-            margin-top: calc(80 * var(--u));
-            font-size: calc(16 * var(--u));
+            margin-top: calc(60 * var(--u));
+            font-size: calc(15 * var(--u));
             padding: 0 calc(20 * var(--u));
           }
 
+          /* Collection */
+          .collection-title {
+            font-size: calc(28 * var(--u));
+          }
+
+          .collection-pills {
+            overflow-x: auto;
+            padding-bottom: calc(6 * var(--u));
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          .collection-meta-controls {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch;
+            gap: calc(10 * var(--u));
+          }
+
+          .search-wrap {
+            width: 100%;
+          }
+
+          .sort-select {
+            width: 100%;
+          }
+
+          /* Trust Panel */
           .trust-panel {
             flex-direction: column;
             align-items: flex-start;
             height: auto;
-            padding: calc(30 * var(--u)) calc(20 * var(--u));
+            padding: calc(32 * var(--u)) calc(20 * var(--u));
           }
 
           .trust-left {
@@ -2244,17 +2516,13 @@ export default function ShoppyOrvantePage() {
           }
 
           .trust-heading {
-            font-size: calc(36 * var(--u));
-          }
-
-          .trust-tile-dots {
-            display: none;
+            font-size: calc(34 * var(--u));
           }
 
           .trust-cards-row {
             flex-direction: column;
             width: 100%;
-            margin-top: calc(30 * var(--u));
+            margin-top: calc(24 * var(--u));
           }
 
           .card-avatars, .card-awards, .card-portrait {
@@ -2263,7 +2531,7 @@ export default function ShoppyOrvantePage() {
           }
 
           .card-portrait {
-            height: calc(200 * var(--u));
+            height: calc(240 * var(--u));
           }
         }
 
