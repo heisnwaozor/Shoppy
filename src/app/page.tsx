@@ -1,21 +1,85 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Product, Category, ProductColor } from '@/types';
+import { PRODUCTS } from '@/data/products';
+import { getProducts } from '@/lib/supabase';
+import { useCartStore } from '@/store/useCartStore';
+import { formatPrice } from '@/lib/utils';
+import { ProductModal } from '@/components/ProductModal';
+import { CartDrawer } from '@/components/CartDrawer';
+import { Search, SlidersHorizontal, Plus, Check, Eye, Zap, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 
-export default function OrvantePage() {
+export default function ShoppyOrvantePage() {
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState<Category>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc'>('featured');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [addedId, setAddedId] = useState<string | null>(null);
+
   const statementRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
   const trustRef = useRef<HTMLDivElement>(null);
 
+  const { toggleCart, getTotalItems, currency, setCurrency, addItem } = useCartStore();
+
   useEffect(() => {
-    // 1. Check motion preferences & recorder param
+    setMounted(true);
+    async function loadData() {
+      const data = await getProducts();
+      setProducts(data);
+    }
+    loadData();
+  }, []);
+
+  const totalCartCount = mounted ? getTotalItems() : 0;
+
+  // Filter & sort products
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p) => {
+        const matchesCategory =
+          selectedCategory === 'all' ? true : p.category === selectedCategory;
+        const matchesSearch =
+          searchQuery.trim() === ''
+            ? true
+            : p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-asc') return a.price_usdc - b.price_usdc;
+        if (sortBy === 'price-desc') return b.price_usdc - a.price_usdc;
+        return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
+      });
+  }, [products, selectedCategory, searchQuery, sortBy]);
+
+  const handleQuickAdd = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addItem(product, product.sizes[0], product.colors[0], 1);
+    setAddedId(product.id);
+    setTimeout(() => setAddedId(null), 1500);
+  };
+
+  const handleScrollToDrops = (cat?: Category) => {
+    if (cat) setSelectedCategory(cat);
+    const target = document.getElementById('collection');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Web Animations, Nav Slider, Counter & Scroll Logic
+  useEffect(() => {
     const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isRecorder = window.location.search.includes('rec=1');
 
-    // 2. Nav sliding pill
-    const navLinks = document.querySelectorAll<HTMLElement>('.nav-link');
-    const navSlider = document.getElementById('nav-slider');
+    // 1. Sliding nav pill
+    const navLinks = document.querySelectorAll<HTMLElement>('.hero-nav-link');
+    const navSlider = document.getElementById('hero-nav-slider');
 
     function updateNavSlider(targetEl: HTMLElement) {
       if (!targetEl || !navSlider) return;
@@ -28,17 +92,12 @@ export default function OrvantePage() {
 
     navLinks.forEach((link) => {
       link.addEventListener('mouseenter', () => updateNavSlider(link));
-      link.addEventListener('click', () => {
-        navLinks.forEach((l) => l.classList.remove('active'));
-        link.classList.add('active');
-        updateNavSlider(link);
-      });
     });
 
-    const activeLink = document.querySelector<HTMLElement>('.nav-link.active');
+    const activeLink = document.querySelector<HTMLElement>('.hero-nav-link.active');
     if (activeLink) updateNavSlider(activeLink);
 
-    // 3. Counter Helper
+    // 2. Counter animation helper
     function animateCounter(id: string, target: number, duration = 1400) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -61,7 +120,7 @@ export default function OrvantePage() {
       requestAnimationFrame(step);
     }
 
-    // 4. Initial Load Animations
+    // 3. Web Animations API on Load
     if (!isReducedMotion && !isRecorder) {
       const heroNav = document.getElementById('hero-nav');
       if (heroNav) {
@@ -146,7 +205,7 @@ export default function OrvantePage() {
       if (c230) c230.innerText = '230';
     }
 
-    // 5. Scroll Interaction: Parallax & Word fill
+    // 4. Scroll Interaction: Parallax & Statement Word Filling
     let trustAnimated = false;
     const wordSpans = Array.from(document.querySelectorAll<HTMLElement>('.word'));
 
@@ -154,7 +213,7 @@ export default function OrvantePage() {
       if (isReducedMotion || isRecorder) return;
       const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
-      // Photo drift
+      // Photo drift (0.12x scroll)
       if (photoRef.current && scrollY < window.innerHeight) {
         photoRef.current.style.transform = `translateY(${scrollY * 0.12}px)`;
       }
@@ -172,14 +231,14 @@ export default function OrvantePage() {
           if (i <= activeIndex - 2) {
             span.style.color = '#f4f4f4';
           } else if (i <= activeIndex) {
-            span.style.color = '#bbbbbb';
+            span.style.color = '#bbbbbb'; // 3-word soft edge
           } else {
             span.style.color = '#6f6f6f';
           }
         });
       }
 
-      // Trust panel entry
+      // Trust panel entry triggers counters & avatar pop-in
       if (trustRef.current && !trustAnimated) {
         const tRect = trustRef.current.getBoundingClientRect();
         if (tRect.top < window.innerHeight * 0.8) {
@@ -203,7 +262,7 @@ export default function OrvantePage() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // 6. Recorder Mode (?rec=1)
+    // 5. Recorder Mode (?rec=1) for Automated Frame Capture
     if (isRecorder) {
       setTimeout(() => {
         let sStart = performance.now();
@@ -243,46 +302,76 @@ export default function OrvantePage() {
 
   return (
     <>
-      {/* External Fonts Link */}
+      {/* External Google Fonts */}
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@100..900&family=Archivo:wdth,wght@62..125,100..900&display=swap"
       />
 
-      <div className="orvante-root">
+      <div className="shoppy-app-root">
         {/* ====================================================================
-             HERO SECTION (1440 x 938u)
+             SECTION 1: HERO (1440 x 938u)
              ==================================================================== */}
         <section className="hero" id="hero">
           <div className="hero-canvas">
             
-            {/* Model Photo in Dark Technical Jacket */}
+            {/* Model Photo in Dark Technical Jacket (Masked over 6% into paper) */}
             <div className="hero-photo-wrap" ref={photoRef} id="hero-photo">
               <img
                 src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/7dc8b8f3-4ccb-4599-8ce4-7f7c7881bad9.webp"
-                alt="Orvante Studio Model in Technical Jacket"
+                alt="Shoppy / Orvante Studio Model in Technical Jacket"
                 className="hero-photo"
               />
             </div>
 
             {/* Segmented Pill Navigation */}
             <nav className="hero-nav" id="hero-nav" aria-label="Main Navigation">
-              <div className="nav-slider" id="nav-slider"></div>
-              <a href="#hero" className="nav-link active">Home</a>
-              <a href="#statement" className="nav-link">Studio</a>
-              <a href="#trust" className="nav-link">Works</a>
-              <Link href="/store" className="nav-link store-link">
-                <span>Shop Drop</span>
-                <span className="store-pill">Solana</span>
-              </Link>
+              <div className="hero-nav-slider" id="hero-nav-slider"></div>
+              <button
+                type="button"
+                onClick={() => handleScrollToDrops('all')}
+                className={`hero-nav-link ${selectedCategory === 'all' ? 'active' : ''}`}
+              >
+                All Drops
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScrollToDrops('hoodies')}
+                className={`hero-nav-link ${selectedCategory === 'hoodies' ? 'active' : ''}`}
+              >
+                Hoodies
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScrollToDrops('polos')}
+                className={`hero-nav-link ${selectedCategory === 'polos' ? 'active' : ''}`}
+              >
+                Polos
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScrollToDrops('accessories')}
+                className={`hero-nav-link ${selectedCategory === 'accessories' ? 'active' : ''}`}
+              >
+                Seeker Gear
+              </button>
             </nav>
 
-            {/* Top Right: Date & Contact */}
+            {/* Top Right: Date & Cart Button */}
             <div className="hero-date" id="hero-date">Sunday / 17.06 – 27 June 2026</div>
-            <Link href="/store" className="hero-contact-btn" id="hero-contact">
-              <span>Contact Us</span>
+            <button
+              type="button"
+              onClick={toggleCart}
+              className="hero-contact-btn"
+              id="hero-contact"
+              aria-label="Open Cart Bag"
+            >
+              <span>Bag</span>
+              {totalCartCount > 0 && (
+                <span className="cart-badge-pill">{totalCartCount}</span>
+              )}
               <span>↗</span>
-            </Link>
+            </button>
 
             {/* Title: PURE / DESIGN ('25) */}
             <div className="hero-title-group" id="hero-title-group">
@@ -301,13 +390,17 @@ export default function OrvantePage() {
               <p className="about-desc">
                 Building stunning website that every brand deserves to be seen.
               </p>
-              <Link href="/store" className="hero-book-btn">
-                <span>Book A Call</span>
+              <button
+                type="button"
+                onClick={() => handleScrollToDrops('all')}
+                className="hero-book-btn"
+              >
+                <span>Shop Drops</span>
                 <span>↗</span>
-              </Link>
+              </button>
             </div>
 
-            {/* Stats Frame (341 x 208u) */}
+            {/* Stats Frame (341 x 208u, light grey #cdcdcd) */}
             <div className="hero-stats-frame" id="hero-stats">
               {/* Dark Card */}
               <div className="stats-card-dark">
@@ -324,10 +417,14 @@ export default function OrvantePage() {
                     <span className="partner-glyph">▼ Arbor</span>
                   </div>
                 </div>
-                <Link href="/store" className="stats-bar-btn">
-                  <span>Book a call</span>
+                <button
+                  type="button"
+                  onClick={() => handleScrollToDrops('all')}
+                  className="stats-bar-btn"
+                >
+                  <span>Explore store</span>
                   <span>↗</span>
-                </Link>
+                </button>
               </div>
 
               {/* Photo Card (Cap photo) */}
@@ -355,14 +452,14 @@ export default function OrvantePage() {
                   <polygon points="12,2 22,22 2,22" />
                 </svg>
               </div>
-              <div className="brand-plate-name">ORVANTE</div>
-              <div className="brand-menu-icon" aria-label="Menu">
+              <div className="brand-plate-name">SHOPPY</div>
+              <div className="brand-menu-icon" onClick={toggleCart} title="Open Bag">
                 <div className="brand-menu-line"></div>
                 <div className="brand-menu-line"></div>
               </div>
             </div>
 
-            {/* Logos across jacket */}
+            {/* Fictional Logos across jacket */}
             <div className="hero-logos-row" id="hero-logos">
               <span>Lumon</span>
               <span>·</span>
@@ -374,20 +471,20 @@ export default function OrvantePage() {
             {/* Right Column: True Growth Pill */}
             <div className="hero-growth-pill" id="hero-growth">
               <div className="growth-check-disc">✓</div>
-              <span>True Growth</span>
+              <span>Solana Pay Active</span>
             </div>
 
             {/* Right Column: Availability */}
             <div className="hero-avail" id="hero-avail">
               <div>We’re available</div>
-              <div><span className="avail-dot">●</span>for you</div>
+              <div><span className="avail-dot">●</span>for checkout</div>
             </div>
 
             {/* Right Column: Out Now / Q Industrial Card */}
-            <div className="hero-q-card" id="hero-q">
+            <div className="hero-q-card" id="hero-q" onClick={() => handleScrollToDrops('hoodies')}>
               <div className="q-card-meta">
                 <span>Out Now</span>
-                <span>[2025]</span>
+                <span>[2026]</span>
               </div>
               <div className="q-card-image-box">
                 <img
@@ -406,21 +503,25 @@ export default function OrvantePage() {
         </section>
 
         {/* ====================================================================
-             BAR SECTION (111u)
+             SECTION 2: BAR (111u)
              ==================================================================== */}
         <div className="bar-section">
           <div className="bar-inner">
             <div>EST <span className="bar-year-grey">2019</span></div>
-            <a href="#statement" className="bar-scroll">
+            <button
+              type="button"
+              onClick={() => handleScrollToDrops('all')}
+              className="bar-scroll"
+            >
               <span>SCROLL DOWN</span>
               <div className="bar-arrow-circle">↓</div>
-            </a>
+            </button>
             <div><span className="bar-live-grey">LIVE IN DETAILS</span></div>
           </div>
         </div>
 
         {/* ====================================================================
-             STATEMENT SECTION (Grey -> White Scroll Fill)
+             SECTION 3: MANIFESTO STATEMENT (Grey -> White Scroll Fill)
              ==================================================================== */}
         <section className="statement-section" id="statement" ref={statementRef}>
           <div className="statement-text">
@@ -440,7 +541,180 @@ export default function OrvantePage() {
         </section>
 
         {/* ====================================================================
-             TRUST PANEL SECTION
+             SECTION 4: THE SHOPPY APPAREL COLLECTION
+             ==================================================================== */}
+        <section className="collection-section" id="collection">
+          <div className="collection-inner">
+            
+            {/* Collection Header Bar */}
+            <div className="collection-header">
+              <div>
+                <span className="collection-eyebrow">
+                  <Zap className="w-3.5 h-3.5 text-[#14F195]" />
+                  SOLANA PAY APPAREL
+                </span>
+                <h2 className="collection-title">
+                  SHOPPY DROP (’26)
+                </h2>
+              </div>
+
+              {/* Controls: Category + Currency + Search */}
+              <div className="collection-controls">
+                {/* Category Pills */}
+                <div className="collection-pills">
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`col-pill ${selectedCategory === 'all' ? 'active' : ''}`}
+                  >
+                    All ({products.length})
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('hoodies')}
+                    className={`col-pill ${selectedCategory === 'hoodies' ? 'active' : ''}`}
+                  >
+                    Hoodies
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('polos')}
+                    className={`col-pill ${selectedCategory === 'polos' ? 'active' : ''}`}
+                  >
+                    Polos
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('accessories')}
+                    className={`col-pill ${selectedCategory === 'accessories' ? 'active' : ''}`}
+                  >
+                    Seeker Gear
+                  </button>
+                </div>
+
+                {/* Currency & Search */}
+                <div className="collection-meta-controls">
+                  <div className="currency-selector">
+                    <button
+                      onClick={() => setCurrency('USDC')}
+                      className={`curr-btn ${currency === 'USDC' ? 'active' : ''}`}
+                    >
+                      USDC
+                    </button>
+                    <button
+                      onClick={() => setCurrency('SOL')}
+                      className={`curr-btn ${currency === 'SOL' ? 'active' : ''}`}
+                    >
+                      SOL
+                    </button>
+                  </div>
+
+                  <div className="search-wrap">
+                    <Search className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search apparel..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="search-input"
+                    />
+                  </div>
+
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="sort-select"
+                  >
+                    <option value="featured">Featured First</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Products Grid (8 Items in Editorial Techwear Aesthetic) */}
+            <div className="products-grid">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  onClick={() => setSelectedProduct(product)}
+                  className="product-card"
+                >
+                  <div className="product-image-box">
+                    <Image
+                      src={product.images[0]}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 300px"
+                      className="product-img"
+                    />
+                    {product.badge && (
+                      <span className="product-badge">{product.badge}</span>
+                    )}
+                    <div className="product-inspect-btn">
+                      <Eye className="w-3.5 h-3.5" /> Inspect
+                    </div>
+                  </div>
+
+                  <div className="product-info">
+                    <div className="product-cat-row">
+                      <span className="product-cat-name">{product.category}</span>
+                      <span className="product-stock-tag">
+                        In Stock ({product.stock})
+                      </span>
+                    </div>
+
+                    <h3 className="product-title">{product.name}</h3>
+
+                    {/* Color Dots */}
+                    <div className="product-colors-row">
+                      {product.colors.map((c) => (
+                        <span
+                          key={c.name}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.name}
+                          className="color-dot"
+                        />
+                      ))}
+                      <span className="color-name">{product.colors[0]?.name}</span>
+                    </div>
+
+                    {/* Bottom Price & Add */}
+                    <div className="product-bottom-row">
+                      <div>
+                        <div className="product-price">
+                          {formatPrice(product.price_usdc, currency)}
+                        </div>
+                        <div className="product-price-alt">
+                          {currency === 'USDC'
+                            ? `≈ ${product.price_sol_approx} SOL`
+                            : `≈ $${product.price_usdc.toFixed(2)} USDC`}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleQuickAdd(e, product)}
+                        className={`add-btn ${addedId === product.id ? 'added' : ''}`}
+                      >
+                        {addedId === product.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" /> Added
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" /> Quick Add
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </section>
+
+        {/* ====================================================================
+             SECTION 5: TRUST PANEL (1302 x 429u)
              ==================================================================== */}
         <section className="trust-section" id="trust" ref={trustRef}>
           <div className="trust-panel" id="trust-panel">
@@ -520,29 +794,44 @@ export default function OrvantePage() {
 
           </div>
         </section>
+
+        {/* ====================================================================
+             SECTION 6: EDITORIAL FOOTER
+             ==================================================================== */}
+        <footer className="editorial-footer">
+          <div className="footer-inner">
+            <div className="footer-top">
+              <div>
+                <span className="footer-logo">SHOPPY</span>
+                <p className="footer-desc">
+                  Solana apparel e-commerce powered by Solana Pay sub-second settlement and Supabase realtime orders. Built for Dev3pack Hackathon.
+                </p>
+              </div>
+              <div className="footer-badges">
+                <span className="footer-pill">⚡ Solana Pay Standard</span>
+                <span className="footer-pill">● Devnet Active</span>
+                <span className="footer-pill">📱 Seeker Ready</span>
+              </div>
+            </div>
+            <div className="footer-bottom">
+              <div>© 2026 Shoppy Labs — All Rights Reserved.</div>
+              <div>EST 2019 · Pure Design · Speedwear</div>
+            </div>
+          </div>
+        </footer>
+
+        {/* Product Modal */}
+        <ProductModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
+
+        {/* Slide-out Cart Drawer */}
+        <CartDrawer />
       </div>
 
       <style jsx global>{`
-        :root {
-          --u: min(100vw / 1440, 1.333px);
-          --c-paper: #dadada;
-          --c-ink: #111111;
-          --c-black: #000000;
-          --c-text: #f4f4f4;
-          --c-stmt-grey: #6f6f6f;
-          --border-14: rgba(255, 255, 255, 0.14);
-          --border-28: rgba(255, 255, 255, 0.28);
-          --font-ui: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
-          --font-display: 'Archivo', sans-serif;
-        }
-
-        @media (max-width: 760px) {
-          :root {
-            --u: calc(100vw / 390);
-          }
-        }
-
-        .orvante-root {
+        .shoppy-app-root {
           width: 100%;
           background-color: var(--c-black);
           color: var(--c-text);
@@ -550,6 +839,7 @@ export default function OrvantePage() {
           overflow-x: hidden;
         }
 
+        /* Hero */
         .hero {
           position: relative;
           width: 100%;
@@ -601,7 +891,7 @@ export default function OrvantePage() {
           box-shadow: 0 calc(2 * var(--u)) calc(12 * var(--u)) rgba(0,0,0,0.06);
         }
 
-        .nav-slider {
+        .hero-nav-slider {
           position: absolute;
           top: calc(4 * var(--u));
           left: calc(4 * var(--u));
@@ -613,7 +903,7 @@ export default function OrvantePage() {
           pointer-events: none;
         }
 
-        .nav-link {
+        .hero-nav-link {
           position: relative;
           z-index: 2;
           padding: 0 calc(18 * var(--u));
@@ -628,19 +918,9 @@ export default function OrvantePage() {
           cursor: pointer;
         }
 
-        .nav-link.active,
-        .nav-link:hover {
+        .hero-nav-link.active,
+        .hero-nav-link:hover {
           color: #ffffff;
-        }
-
-        .store-pill {
-          font-size: calc(9 * var(--u));
-          padding: calc(1 * var(--u)) calc(5 * var(--u));
-          border-radius: calc(4 * var(--u));
-          background: #14F195;
-          color: #000000;
-          font-weight: 700;
-          margin-left: calc(4 * var(--u));
         }
 
         .hero-date {
@@ -676,6 +956,16 @@ export default function OrvantePage() {
         .hero-contact-btn:hover {
           transform: translateY(-1px);
           background: #000000;
+        }
+
+        .cart-badge-pill {
+          background: #14F195;
+          color: #000000;
+          font-size: calc(10 * var(--u));
+          font-weight: 700;
+          padding: 0 calc(6 * var(--u));
+          border-radius: 9999px;
+          line-height: calc(18 * var(--u));
         }
 
         .hero-title-group {
@@ -935,6 +1225,7 @@ export default function OrvantePage() {
           top: calc(510 * var(--u));
           width: calc(190 * var(--u));
           z-index: 15;
+          cursor: pointer;
         }
 
         .q-card-meta {
@@ -954,7 +1245,6 @@ export default function OrvantePage() {
           border-radius: calc(10 * var(--u));
           overflow: hidden;
           background: #000;
-          cursor: pointer;
         }
 
         .q-card-img {
@@ -1079,6 +1369,7 @@ export default function OrvantePage() {
           text-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
 
+        /* Bar */
         .bar-section {
           width: 100%;
           height: calc(111 * var(--u));
@@ -1130,6 +1421,7 @@ export default function OrvantePage() {
           color: var(--c-stmt-grey);
         }
 
+        /* Statement */
         .statement-section {
           width: 100%;
           background-color: var(--c-black);
@@ -1171,6 +1463,339 @@ export default function OrvantePage() {
           font-style: italic;
         }
 
+        /* Collection Section */
+        .collection-section {
+          width: 100%;
+          background: #000000;
+          padding: calc(60 * var(--u)) 0 calc(120 * var(--u)) 0;
+          border-top: 1px solid var(--border-14);
+        }
+
+        .collection-inner {
+          width: 100%;
+          max-width: calc(1302 * var(--u));
+          margin: 0 auto;
+          padding: 0 calc(20 * var(--u));
+        }
+
+        .collection-header {
+          display: flex;
+          flex-direction: column;
+          gap: calc(24 * var(--u));
+          margin-bottom: calc(48 * var(--u));
+          padding-bottom: calc(24 * var(--u));
+          border-bottom: 1px solid var(--border-14);
+        }
+
+        @media (min-width: 1024px) {
+          .collection-header {
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-between;
+          }
+        }
+
+        .collection-eyebrow {
+          font-size: calc(12 * var(--u));
+          color: #14F195;
+          font-family: var(--font-display);
+          font-variation-settings: 'wdth' 115, 'wght' 600;
+          letter-spacing: 0.12em;
+          display: flex;
+          align-items: center;
+          gap: calc(6 * var(--u));
+          margin-bottom: calc(6 * var(--u));
+        }
+
+        .collection-title {
+          font-family: var(--font-display);
+          font-size: calc(44 * var(--u));
+          font-variation-settings: 'wdth' 105, 'wght' 700;
+          letter-spacing: -0.04em;
+          line-height: 1;
+          color: #ffffff;
+        }
+
+        .collection-controls {
+          display: flex;
+          flex-direction: column;
+          gap: calc(12 * var(--u));
+        }
+
+        .collection-pills {
+          display: flex;
+          gap: calc(6 * var(--u));
+          flex-wrap: wrap;
+        }
+
+        .col-pill {
+          padding: calc(8 * var(--u)) calc(16 * var(--u));
+          border-radius: 9999px;
+          border: 1px solid var(--border-14);
+          background: #111111;
+          color: #888888;
+          font-size: calc(12 * var(--u));
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .col-pill.active, .col-pill:hover {
+          background: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
+        }
+
+        .collection-meta-controls {
+          display: flex;
+          align-items: center;
+          gap: calc(8 * var(--u));
+          flex-wrap: wrap;
+        }
+
+        .currency-selector {
+          display: flex;
+          background: #111111;
+          border: 1px solid var(--border-14);
+          border-radius: 9999px;
+          padding: calc(3 * var(--u));
+        }
+
+        .curr-btn {
+          padding: calc(4 * var(--u)) calc(12 * var(--u));
+          border-radius: 9999px;
+          font-size: calc(11 * var(--u));
+          font-weight: 600;
+          color: #888888;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .curr-btn.active {
+          background: #ffffff;
+          color: #000000;
+        }
+
+        .search-wrap {
+          position: relative;
+          min-width: calc(200 * var(--u));
+        }
+
+        .search-icon {
+          position: absolute;
+          left: calc(10 * var(--u));
+          top: 50%;
+          transform: translateY(-50%);
+          width: calc(14 * var(--u));
+          height: calc(14 * var(--u));
+          color: #666666;
+        }
+
+        .search-input {
+          width: 100%;
+          background: #111111;
+          border: 1px solid var(--border-14);
+          border-radius: 9999px;
+          padding: calc(7 * var(--u)) calc(14 * var(--u)) calc(7 * var(--u)) calc(32 * var(--u));
+          font-size: calc(12 * var(--u));
+          color: #ffffff;
+          outline: none;
+        }
+
+        .sort-select {
+          background: #111111;
+          border: 1px solid var(--border-14);
+          border-radius: 9999px;
+          padding: calc(7 * var(--u)) calc(14 * var(--u));
+          font-size: calc(12 * var(--u));
+          color: #cccccc;
+          outline: none;
+          cursor: pointer;
+        }
+
+        /* Products Grid */
+        .products-grid {
+          display: grid;
+          grid-template-columns: repeat(1, 1fr);
+          gap: calc(20 * var(--u));
+        }
+
+        @media (min-width: 640px) {
+          .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .products-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+
+        .product-card {
+          background: #141414;
+          border: 1px solid var(--border-14);
+          border-radius: calc(12 * var(--u));
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
+          transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s;
+        }
+
+        .product-card:hover {
+          transform: translateY(calc(-4 * var(--u)));
+          border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .product-image-box {
+          position: relative;
+          aspect-ratio: 1 / 1;
+          width: 100%;
+          background: #0a0a0a;
+          overflow: hidden;
+        }
+
+        .product-img {
+          object-fit: cover;
+          transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-img {
+          transform: scale(1.06);
+        }
+
+        .product-badge {
+          position: absolute;
+          top: calc(10 * var(--u));
+          left: calc(10 * var(--u));
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #ffffff;
+          font-size: calc(10 * var(--u));
+          font-family: var(--font-display);
+          font-variation-settings: 'wdth' 100, 'wght' 600;
+          text-transform: uppercase;
+          padding: calc(3 * var(--u)) calc(8 * var(--u));
+          border-radius: calc(4 * var(--u));
+          z-index: 2;
+        }
+
+        .product-inspect-btn {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: calc(6 * var(--u));
+          color: #ffffff;
+          font-size: calc(12 * var(--u));
+          font-weight: 500;
+          opacity: 0;
+          transition: opacity 0.25s;
+        }
+
+        .product-card:hover .product-inspect-btn {
+          opacity: 1;
+        }
+
+        .product-info {
+          padding: calc(16 * var(--u));
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+
+        .product-cat-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: calc(10 * var(--u));
+          font-family: var(--font-display);
+          text-transform: uppercase;
+          color: #888888;
+          margin-bottom: calc(6 * var(--u));
+        }
+
+        .product-stock-tag {
+          color: #14F195;
+          font-size: calc(9 * var(--u));
+        }
+
+        .product-title {
+          font-size: calc(15 * var(--u));
+          font-weight: 600;
+          font-family: var(--font-display);
+          color: #ffffff;
+          line-height: 1.25;
+          margin-bottom: calc(10 * var(--u));
+        }
+
+        .product-colors-row {
+          display: flex;
+          align-items: center;
+          gap: calc(6 * var(--u));
+          margin-bottom: calc(16 * var(--u));
+        }
+
+        .color-dot {
+          width: calc(12 * var(--u));
+          height: calc(12 * var(--u));
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .color-name {
+          font-size: calc(11 * var(--u));
+          color: #777777;
+        }
+
+        .product-bottom-row {
+          margin-top: auto;
+          padding-top: calc(12 * var(--u));
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .product-price {
+          font-size: calc(15 * var(--u));
+          font-weight: 700;
+          font-family: var(--font-display);
+          color: #ffffff;
+        }
+
+        .product-price-alt {
+          font-size: calc(10 * var(--u));
+          color: #777777;
+        }
+
+        .add-btn {
+          padding: calc(6 * var(--u)) calc(12 * var(--u));
+          background: #ffffff;
+          color: #000000;
+          border-radius: 9999px;
+          font-size: calc(11 * var(--u));
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: calc(4 * var(--u));
+          transition: transform 0.2s, background 0.2s;
+        }
+
+        .add-btn:hover {
+          transform: scale(1.04);
+        }
+
+        .add-btn.added {
+          background: #14F195;
+          color: #000000;
+        }
+
+        /* Trust Panel */
         .trust-section {
           width: 100%;
           background-color: var(--c-black);
@@ -1391,6 +2016,83 @@ export default function OrvantePage() {
           filter: grayscale(1);
         }
 
+        /* Editorial Footer */
+        .editorial-footer {
+          width: 100%;
+          background: #090909;
+          border-top: 1px solid var(--border-14);
+          padding: calc(60 * var(--u)) 0;
+        }
+
+        .footer-inner {
+          width: 100%;
+          max-width: calc(1302 * var(--u));
+          margin: 0 auto;
+          padding: 0 calc(20 * var(--u));
+        }
+
+        .footer-top {
+          display: flex;
+          flex-direction: column;
+          gap: calc(20 * var(--u));
+          justify-content: space-between;
+          padding-bottom: calc(30 * var(--u));
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        @media (min-width: 768px) {
+          .footer-top {
+            flex-direction: row;
+            align-items: flex-start;
+          }
+        }
+
+        .footer-logo {
+          font-family: var(--font-display);
+          font-size: calc(24 * var(--u));
+          font-variation-settings: 'wdth' 125, 'wght' 700;
+          letter-spacing: 0.1em;
+          color: #ffffff;
+          display: block;
+          margin-bottom: calc(8 * var(--u));
+        }
+
+        .footer-desc {
+          font-size: calc(12 * var(--u));
+          color: #777777;
+          max-width: calc(440 * var(--u));
+          line-height: 1.5;
+        }
+
+        .footer-badges {
+          display: flex;
+          gap: calc(8 * var(--u));
+          flex-wrap: wrap;
+        }
+
+        .footer-pill {
+          padding: calc(6 * var(--u)) calc(12 * var(--u));
+          background: #141414;
+          border: 1px solid var(--border-14);
+          border-radius: 9999px;
+          font-size: calc(11 * var(--u));
+          font-family: var(--font-display);
+          color: #cccccc;
+        }
+
+        .footer-bottom {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: calc(24 * var(--u));
+          font-size: calc(11 * var(--u));
+          color: #555555;
+          font-family: var(--font-display);
+          flex-wrap: wrap;
+          gap: calc(10 * var(--u));
+        }
+
+        /* Phone layout <= 760px */
         @media (max-width: 760px) {
           .hero {
             height: auto;
@@ -1404,11 +2106,11 @@ export default function OrvantePage() {
             height: calc(42 * var(--u));
           }
 
-          .nav-slider {
+          .hero-nav-slider {
             height: calc(34 * var(--u));
           }
 
-          .nav-link {
+          .hero-nav-link {
             padding: 0 calc(12 * var(--u));
             font-size: calc(12 * var(--u));
           }
