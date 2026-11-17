@@ -85,6 +85,21 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
                   </span>
                 </div>
               )}
+
+              {/* Solana Emblem Seal */}
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20 shadow-md">
+                <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0">
+                  <Image
+                    src="/solana-logo.png"
+                    alt="Solana Authentic Brand Seal"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-[10px] font-mono tracking-wider font-semibold uppercase text-zinc-300">
+                  Solana
+                </span>
+              </div>
             </div>
 
             {/* Thumbnails */}
@@ -113,7 +128,11 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
               <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
                 <span className="uppercase tracking-widest text-zinc-300 flex items-center gap-1.5 font-semibold">
                   <ShoppyLogo className="w-3.5 h-3.5" />
-                  {product.category}
+                  {product.category === 'polos'
+                    ? 'Polo Shirt'
+                    : product.category === 'hoodies'
+                    ? 'Heavyweight Hoodie'
+                    : 'Runway Suit'}
                 </span>
                 <span className="flex items-center gap-1 text-zinc-400">
                   <Zap className="w-3.5 h-3.5 text-white" /> Solana Pay Enabled
@@ -124,6 +143,29 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
               <h2 className="text-2xl font-bold font-mono text-white mb-3">
                 {product.name}
               </h2>
+
+              {/* Official Solana Brand Callout */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 mb-4">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/20">
+                  <Image
+                    src="/solana-logo.png"
+                    alt="Official Solana Brand Seal"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <div className="text-xs font-mono">
+                  <div className="text-white font-semibold flex items-center gap-1.5">
+                    Official Solana Apparel Drop
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-normal">
+                      NFC Verified
+                    </span>
+                  </div>
+                  <div className="text-zinc-400 text-[11px]">
+                    Features precision thermal-bonded Solana insignia
+                  </div>
+                </div>
+              </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-5">

@@ -81,7 +81,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                 Your bag is empty
               </h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6 font-sans">
-                Explore our heavyweight hoodies and engineered polos powered by Solana Pay.
+                Explore our engineered polos, heavyweight hoodies, and tailored runway suits powered by Solana Pay.
               </p>
               <button
                 onClick={() => setIsOpen(false)}
@@ -172,9 +172,16 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
         {/* Drawer Footer with Checkout CTA — Strict Monochrome Black & White */}
         {items.length > 0 && (
           <div className="p-5 border-t border-white/10 bg-[#000000] space-y-4">
-            {/* Solana Pay Highlight Box */}
+            {/* Solana Pay Highlight Box with Official Logo */}
             <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#111111] border border-white/10 text-xs font-mono">
-              <Zap className="w-3.5 h-3.5 text-white shrink-0" />
+              <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0">
+                <Image
+                  src="/solana-logo.png"
+                  alt="Solana Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
               <div className="text-zinc-300 text-[11px] leading-tight">
                 <span className="text-white font-semibold">Solana Pay Standard:</span> Real-time reference key & sub-second settlement.
               </div>

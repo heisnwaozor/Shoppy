@@ -49,6 +49,36 @@ export function ProductCard({ product, onOpenModal }: ProductCardProps) {
           </div>
         )}
 
+        {/* Branded Solana Emblem */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20 shadow-md">
+          <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0">
+            <Image
+              src="/solana-logo.png"
+              alt="Solana Authentic Brand Seal"
+              fill
+              className="object-contain"
+            />
+          </div>
+          <span className="text-[9px] font-mono tracking-wider font-semibold uppercase text-zinc-300">
+            Solana
+          </span>
+        </div>
+
+        {/* Bottom corner garment insignia watermark */}
+        <div className="absolute bottom-3 left-3 z-10 opacity-70 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 pointer-events-none">
+          <div className="relative w-3.5 h-3.5 rounded-full overflow-hidden">
+            <Image
+              src="/solana-logo.png"
+              alt="Solana Brand Mark"
+              fill
+              className="object-contain"
+            />
+          </div>
+          <span className="text-[8px] font-mono tracking-widest uppercase text-white/80 bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
+            PAY NATIVE
+          </span>
+        </div>
+
         {/* Hover Quick View Overlay button */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-mono font-medium border border-white/20 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform">
@@ -62,7 +92,11 @@ export function ProductCard({ product, onOpenModal }: ProductCardProps) {
         {/* Category & Stock */}
         <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 mb-1.5 uppercase tracking-wider">
           <span>
-            {product.category === 'polos' ? 'Polo Shirt' : product.category === 'hoodies' ? 'Heavyweight Hoodie' : 'Technical Gear'}
+            {product.category === 'polos'
+              ? 'Polo Shirt'
+              : product.category === 'hoodies'
+              ? 'Heavyweight Hoodie'
+              : 'Runway Suit'}
           </span>
           <span className="text-zinc-400 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-white"></span>

@@ -1,4 +1,4 @@
-export type Category = 'all' | 'hoodies' | 'polos' | 'accessories';
+export type Category = 'all' | 'hoodies' | 'polos' | 'runway-suits';
 
 export interface ProductColor {
   name: string;
@@ -9,7 +9,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  category: 'hoodies' | 'polos' | 'accessories';
+  category: 'hoodies' | 'polos' | 'runway-suits';
   description: string;
   features: string[];
   price_usdc: number;

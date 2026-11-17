@@ -384,10 +384,10 @@ export default function ShoppyOrvantePage() {
               </button>
               <button
                 type="button"
-                onClick={() => handleScrollToDrops('accessories')}
-                className={`hero-nav-link ${selectedCategory === 'accessories' ? 'active' : ''}`}
+                onClick={() => handleScrollToDrops('runway-suits')}
+                className={`hero-nav-link ${selectedCategory === 'runway-suits' ? 'active' : ''}`}
               >
-                Seeker Gear
+                Runway Suits
               </button>
             </nav>
 
@@ -616,10 +616,10 @@ export default function ShoppyOrvantePage() {
                     Polos
                   </button>
                   <button
-                    onClick={() => setSelectedCategory('accessories')}
-                    className={`col-pill ${selectedCategory === 'accessories' ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory('runway-suits')}
+                    className={`col-pill ${selectedCategory === 'runway-suits' ? 'active' : ''}`}
                   >
-                    Seeker Gear
+                    Runway Suits
                   </button>
                 </div>
 
@@ -683,6 +683,33 @@ export default function ShoppyOrvantePage() {
                     {product.badge && (
                       <span className="product-badge">{product.badge}</span>
                     )}
+
+                    {/* Official Solana Emblem Brand Seal */}
+                    <div className="product-brand-tag">
+                      <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0">
+                        <Image
+                          src="/solana-logo.png"
+                          alt="Solana Authentic Brand Seal"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span>Solana</span>
+                    </div>
+
+                    {/* Watermark in bottom corner */}
+                    <div className="product-corner-seal">
+                      <div className="relative w-3.5 h-3.5 rounded-full overflow-hidden">
+                        <Image
+                          src="/solana-logo.png"
+                          alt="Solana Brand Mark"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span>PAY NATIVE</span>
+                    </div>
+
                     <div className="product-inspect-btn">
                       <Eye className="w-3.5 h-3.5" /> Inspect
                     </div>
@@ -690,7 +717,13 @@ export default function ShoppyOrvantePage() {
 
                   <div className="product-info">
                     <div className="product-cat-row">
-                      <span className="product-cat-name">{product.category}</span>
+                      <span className="product-cat-name">
+                        {product.category === 'polos'
+                          ? 'Polo Shirt'
+                          : product.category === 'hoodies'
+                          ? 'Heavyweight Hoodie'
+                          : 'Runway Suit'}
+                      </span>
                       <span className="product-stock-tag">
                         In Stock ({product.stock})
                       </span>
@@ -1799,6 +1832,55 @@ export default function ShoppyOrvantePage() {
           padding: calc(3 * var(--u)) calc(8 * var(--u));
           border-radius: calc(4 * var(--u));
           z-index: 2;
+        }
+
+        .product-brand-tag {
+          position: absolute;
+          top: calc(10 * var(--u));
+          right: calc(10 * var(--u));
+          background: rgba(0, 0, 0, 0.82);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #e4e4e7;
+          font-size: calc(9 * var(--u));
+          font-family: var(--font-display);
+          font-variation-settings: 'wdth' 100, 'wght' 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: calc(3 * var(--u)) calc(8 * var(--u));
+          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          gap: calc(5 * var(--u));
+          z-index: 2;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .product-corner-seal {
+          position: absolute;
+          bottom: calc(10 * var(--u));
+          left: calc(10 * var(--u));
+          background: rgba(0, 0, 0, 0.65);
+          backdrop-filter: blur(6px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: rgba(255, 255, 255, 0.85);
+          font-size: calc(8 * var(--u));
+          font-family: var(--font-display);
+          font-variation-settings: 'wdth' 95, 'wght' 600;
+          letter-spacing: 0.12em;
+          padding: calc(2 * var(--u)) calc(6 * var(--u));
+          border-radius: calc(3 * var(--u));
+          display: flex;
+          align-items: center;
+          gap: calc(4 * var(--u));
+          z-index: 2;
+          pointer-events: none;
+          opacity: 0.75;
+          transition: opacity 0.2s ease;
+        }
+
+        .product-card:hover .product-corner-seal {
+          opacity: 1;
         }
 
         .product-inspect-btn {
