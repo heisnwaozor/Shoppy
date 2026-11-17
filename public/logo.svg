@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="22" fill="#000000"/>
+  <!-- Top Segment -->
+  <path d="M22 22H78V40H48L36 52H22V22Z" fill="#FFFFFF"/>
+  <!-- Bottom Segment -->
+  <path d="M78 48H64L52 60H22V78H78V48Z" fill="#FFFFFF"/>
+  <!-- Central Precision Accent Slit -->
+  <circle cx="50" cy="50" r="3" fill="#FFFFFF" opacity="0.6"/>
+</svg>

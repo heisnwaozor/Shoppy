@@ -1,18 +1,15 @@
-import { Zap, Shield, Database, ExternalLink } from 'lucide-react';
+import { Zap, Shield, Database } from 'lucide-react';
+import { ShoppyLogo } from './ShoppyLogo';
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-zinc-800/80 bg-zinc-950 py-12 text-zinc-400">
+    <footer className="w-full border-t border-white/10 bg-[#090909] py-12 text-zinc-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand info */}
           <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#9945FF] to-[#14F195] p-[1px]">
-                <div className="w-full h-full bg-black rounded-[7px] flex items-center justify-center font-bold text-white text-xs font-mono">
-                  S
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5">
+              <ShoppyLogo className="w-7 h-7" />
               <span className="font-mono font-bold text-base text-white tracking-wider">
                 SHOPPY
               </span>
@@ -21,7 +18,7 @@ export function Footer() {
               Solana apparel e-commerce powered by Solana Pay sub-second settlement and Supabase realtime order state. Built for the Dev3pack Hackathon.
             </p>
             <div className="flex items-center gap-2 pt-2 text-[11px] font-mono text-zinc-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
               <span>Devnet Network Active</span>
             </div>
           </div>
@@ -33,15 +30,15 @@ export function Footer() {
             </h4>
             <ul className="text-xs space-y-1.5 font-sans">
               <li className="flex items-center gap-1.5 text-zinc-300">
-                <Zap className="w-3.5 h-3.5 text-[#14F195]" />
+                <Zap className="w-3.5 h-3.5 text-white" />
                 Solana Pay & Consumer Apps
               </li>
               <li className="flex items-center gap-1.5 text-zinc-300">
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
+                <Database className="w-3.5 h-3.5 text-white" />
                 Supabase Sponsor Integration
               </li>
               <li className="flex items-center gap-1.5 text-zinc-300">
-                <Shield className="w-3.5 h-3.5 text-[#9945FF]" />
+                <Shield className="w-3.5 h-3.5 text-white" />
                 Solana Mobile / Seeker Ready
               </li>
             </ul>
@@ -54,7 +51,7 @@ export function Footer() {
             </h4>
             <ul className="text-xs space-y-1.5 font-mono text-zinc-400">
               <li>Next.js 16 (App Router + Turbopack)</li>
-              <li>Tailwind CSS v4 & Lucide Icons</li>
+              <li>Tailwind CSS v4 & Strict Monochrome</li>
               <li>@solana/pay & @solana/web3.js</li>
               <li>Zustand State Store (Persisted)</li>
               <li>Supabase Database & Realtime</li>
@@ -70,7 +67,7 @@ export function Footer() {
               Every checkout generates an ephemeral Ed25519 reference public key. Zero custody, peer-to-peer transaction verification directly against Solana RPC nodes.
             </p>
             <div className="pt-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-400">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#111111] border border-white/10 text-[10px] font-mono text-zinc-300">
                 Standard: solana:&lt;recipient&gt;?reference=...
               </span>
             </div>
@@ -78,12 +75,12 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-zinc-400 gap-4">
+        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-zinc-500 gap-4">
           <p>© 2026 Shoppy Labs — Built for Dev3pack Solana Hackathon.</p>
-          <div className="flex items-center gap-4">
-            <span className="text-[#14F195]">Speed: ~400ms TPS</span>
+          <div className="flex items-center gap-4 text-zinc-400">
+            <span>Speed: ~400ms TPS</span>
             <span>•</span>
-            <span className="text-[#9945FF]">USDC & SOL Accepted</span>
+            <span>USDC & SOL Accepted</span>
           </div>
         </div>
       </div>

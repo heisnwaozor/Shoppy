@@ -8,6 +8,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { formatPrice } from '@/lib/utils';
 import { ProductModal } from '@/components/ProductModal';
 import { CartDrawer } from '@/components/CartDrawer';
+import { ShoppyLogo } from '@/components/ShoppyLogo';
 import { Search, SlidersHorizontal, Plus, Check, Eye, Zap, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 
@@ -448,9 +449,7 @@ export default function ShoppyOrvantePage() {
             {/* Brand Plate over Man's Back (364 x 73u) */}
             <div className="hero-brand-plate" id="hero-plate">
               <div className="brand-mark">
-                <svg className="mark-tri" viewBox="0 0 24 24">
-                  <polygon points="12,2 22,22 2,22" />
-                </svg>
+                <ShoppyLogo className="w-7 h-7" />
               </div>
               <div className="brand-plate-name">SHOPPY</div>
               <div className="brand-menu-icon" onClick={toggleCart} title="Open Bag">
@@ -550,7 +549,7 @@ export default function ShoppyOrvantePage() {
             <div className="collection-header">
               <div>
                 <span className="collection-eyebrow">
-                  <Zap className="w-3.5 h-3.5 text-[#14F195]" />
+                  <ShoppyLogo className="w-3.5 h-3.5" />
                   SOLANA PAY APPAREL
                 </span>
                 <h2 className="collection-title">
@@ -802,7 +801,10 @@ export default function ShoppyOrvantePage() {
           <div className="footer-inner">
             <div className="footer-top">
               <div>
-                <span className="footer-logo">SHOPPY</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <ShoppyLogo className="w-6 h-6" />
+                  <span className="footer-logo" style={{ marginBottom: 0 }}>SHOPPY</span>
+                </div>
                 <p className="footer-desc">
                   Solana apparel e-commerce powered by Solana Pay sub-second settlement and Supabase realtime orders. Built for Dev3pack Hackathon.
                 </p>
@@ -959,7 +961,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .cart-badge-pill {
-          background: #14F195;
+          background: #ffffff;
           color: #000000;
           font-size: calc(10 * var(--u));
           font-weight: 700;
@@ -1497,7 +1499,7 @@ export default function ShoppyOrvantePage() {
 
         .collection-eyebrow {
           font-size: calc(12 * var(--u));
-          color: #14F195;
+          color: #ffffff;
           font-family: var(--font-display);
           font-variation-settings: 'wdth' 115, 'wght' 600;
           letter-spacing: 0.12em;
@@ -1720,7 +1722,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .product-stock-tag {
-          color: #14F195;
+          color: #bbbbbb;
           font-size: calc(9 * var(--u));
         }
 
@@ -1791,7 +1793,7 @@ export default function ShoppyOrvantePage() {
         }
 
         .add-btn.added {
-          background: #14F195;
+          background: #ffffff;
           color: #000000;
         }
 

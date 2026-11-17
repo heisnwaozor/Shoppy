@@ -13,9 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Shoppy // Solana Athletics & Apparel',
+  title: 'SHOPPY — Pure Design & Solana Apparel',
   description: 'Fast, fee-less apparel shopping powered by Solana Pay sub-second settlement and Supabase realtime orders. Built for Dev3pack.',
-  keywords: ['Solana', 'Solana Pay', 'Apparel', 'Streetwear', 'Dev3pack', 'Crypto Commerce'],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -25,7 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark`}>
-      <body className="min-h-screen flex flex-col bg-[#09090b] text-[#f4f4f5]">
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
+      <body className="min-h-screen flex flex-col bg-[#000000] text-[#f4f4f4]">
         {children}
       </body>
     </html>

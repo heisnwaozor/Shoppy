@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCartStore } from '@/store/useCartStore';
 import { formatPrice } from '@/lib/utils';
 import { X, Trash2, Plus, Minus, ArrowRight, Zap, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { ShoppyLogo } from './ShoppyLogo';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -46,26 +47,26 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
         onClick={() => setIsOpen(false)}
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-zinc-950 border-l border-zinc-800 h-full flex flex-col z-10 shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-md bg-[#000000] border-l border-white/10 h-full flex flex-col z-10 shadow-2xl animate-in slide-in-from-right duration-300">
         {/* Drawer Header */}
-        <div className="p-5 border-b border-zinc-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-[#14F195]" />
-            <h2 className="font-mono font-bold text-base text-white">
-              YOUR CART ({totalCount})
+        <div className="p-5 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <ShoppyLogo className="w-5 h-5" />
+            <h2 className="font-mono font-bold text-sm tracking-wider uppercase text-white">
+              YOUR BAG ({totalCount})
             </h2>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
             aria-label="Close cart"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -73,10 +74,10 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-12">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-                <ShoppingBag className="w-8 h-8 text-zinc-600" />
+              <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-white/10 flex items-center justify-center mb-4">
+                <ShoppingBag className="w-7 h-7 text-zinc-600" />
               </div>
-              <h3 className="font-mono text-base font-semibold text-zinc-300 mb-1">
+              <h3 className="font-mono text-sm font-semibold text-white mb-1 uppercase tracking-wider">
                 Your bag is empty
               </h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6 font-sans">
@@ -84,7 +85,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
               </p>
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-mono font-semibold text-white transition-colors"
+                className="px-5 py-2.5 rounded-full bg-white text-black hover:bg-zinc-200 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
               >
                 Browse Collection
               </button>
@@ -93,10 +94,10 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 hover:border-zinc-700 transition-colors"
+                className="flex gap-4 p-3.5 rounded-xl bg-[#111111] border border-white/10 hover:border-white/20 transition-colors"
               >
                 {/* Thumbnail */}
-                <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-zinc-950 shrink-0 border border-white/10">
                   <Image
                     src={item.image}
                     alt={item.name}
@@ -114,7 +115,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                       </h4>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-zinc-400 hover:text-red-400 p-0.5 transition-colors"
+                        className="text-zinc-500 hover:text-white p-0.5 transition-colors"
                         aria-label="Remove item"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -123,7 +124,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
 
                     {/* Size and Color tags */}
                     <div className="flex items-center gap-2 mt-1 text-[11px] font-mono text-zinc-400">
-                      <span className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300">
+                      <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10 text-zinc-200">
                         {item.size}
                       </span>
                       <span className="flex items-center gap-1">
@@ -137,8 +138,8 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                   </div>
 
                   {/* Quantity and Price */}
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/50">
-                    <div className="flex items-center border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                    <div className="flex items-center border border-white/10 bg-zinc-950 rounded-md overflow-hidden">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         className="px-2 py-1 text-zinc-400 hover:text-white"
@@ -168,14 +169,14 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
           )}
         </div>
 
-        {/* Drawer Footer with Checkout CTA */}
+        {/* Drawer Footer with Checkout CTA — Strict Monochrome Black & White */}
         {items.length > 0 && (
-          <div className="p-5 border-t border-zinc-800/80 bg-zinc-950 space-y-4">
-            {/* Solana Pay Highlight Pill */}
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-[#9945FF]/10 via-[#14F195]/10 to-transparent border border-zinc-800 text-xs font-mono">
-              <Zap className="w-4 h-4 text-[#14F195] shrink-0" />
+          <div className="p-5 border-t border-white/10 bg-[#000000] space-y-4">
+            {/* Solana Pay Highlight Box */}
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#111111] border border-white/10 text-xs font-mono">
+              <Zap className="w-3.5 h-3.5 text-white shrink-0" />
               <div className="text-zinc-300 text-[11px] leading-tight">
-                <span className="text-[#14F195] font-semibold">Solana Pay Standard:</span> Real-time reference key & sub-second settlement.
+                <span className="text-white font-semibold">Solana Pay Standard:</span> Real-time reference key & sub-second settlement.
               </div>
             </div>
 
@@ -187,15 +188,15 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
               </div>
               <div className="flex justify-between text-zinc-400">
                 <span>Network Settlement Fee</span>
-                <span className="text-emerald-400">&lt; $0.001 (Solana)</span>
+                <span className="text-white">&lt; $0.001 (Solana)</span>
               </div>
               <div className="flex justify-between text-zinc-400">
                 <span>Shipping</span>
-                <span className="text-emerald-400 font-semibold">FREE (HACKATHON DROP)</span>
+                <span className="text-white font-semibold">FREE (HACKATHON DROP)</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-zinc-800">
+              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/10">
                 <span>Total Due</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9945FF] to-[#14F195]">
+                <span className="text-white text-base">
                   {formatPrice(totalUsdc, currency)}
                 </span>
               </div>
@@ -206,7 +207,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
               <Link
                 href="/checkout"
                 onClick={() => setIsOpen(false)}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#9945FF] via-[#7C3AED] to-[#14F195] text-black font-mono font-bold text-xs tracking-wider uppercase transition-all shadow-lg shadow-[#9945FF]/20 hover:shadow-[#14F195]/30 hover:opacity-95 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-full bg-white text-black hover:bg-zinc-200 font-mono font-bold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]"
               >
                 <span>Checkout with Solana Pay</span>
                 <ArrowRight className="w-4 h-4 text-black" />
@@ -214,14 +215,14 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
 
               <button
                 onClick={clearCart}
-                className="w-full py-2 text-center text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="w-full py-1.5 text-center text-[11px] font-mono text-zinc-500 hover:text-white transition-colors"
               >
                 Clear Cart
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-zinc-400">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#14F195]" />
+            <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-zinc-500">
+              <ShieldCheck className="w-3.5 h-3.5 text-white" />
               <span>Devnet-Compatible • Instant Wallet QR</span>
             </div>
           </div>
